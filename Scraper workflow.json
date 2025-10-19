@@ -1,0 +1,257 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        -96
+      ],
+      "id": "0c85dc27-3c09-4bed-a37e-df711f7f0f27",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://www.espn.com/mma/schedule/_/league/ufc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -608,
+        -96
+      ],
+      "id": "b941b2c2-83b6-4c12-bbea-a20918d6c34c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Can you extract the closets upcoming UFC event and put it in json formt.\nReturn only the json.\n{{ $json.chatInput }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -192,
+        -96
+      ],
+      "id": "4e3cfef8-b841-486b-bcd5-ea43f2b0925d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:120b-cloud",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        80
+      ],
+      "id": "4610befd-16b5-415b-9106-fa47528b7cc9",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "CiKdGDRRns5Hw7Hl",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.message }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        -96
+      ],
+      "id": "9a482bb7-aa5a-4555-9d1c-56a9fd7fe253",
+      "name": "Send a text message",
+      "webhookId": "a131b3fc-34de-40a9-8fb1-690870cfccde",
+      "credentials": {
+        "telegramApi": {
+          "id": "oAReQEXBjGB9DusV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input JSON (assuming it's in the first item)\nconst data = items[0].json;\n\n// Get today's date in YYYY-MM-DD format\nconst today = new Date().toISOString().split('T')[0];\n\n// Compare the date\nif (data.date === today) {\n  return [\n    {\n      json: {\n        event: data.event,\n        message: `${data.event} is today at ${data.time}`,\n      },\n    },\n  ];\n} else {\n  return [\n    {\n      json: {\n        message: 'No event today',\n      },\n    },\n  ];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -96
+      ],
+      "id": "d457826f-256c-4c5e-a9b1-0d9c591263ef",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "00 7 * * SAT,SUN"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        80
+      ],
+      "id": "28425bb0-1092-45a1-b0ec-cddbd354765c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "chatInput",
+              "cssSelector": "html"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        -96
+      ],
+      "id": "f12f9387-c22a-4d8a-aac4-a11bbe4f2d96",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        -96
+      ],
+      "id": "90a750f0-16cd-4e84-9854-51a33938715c",
+      "name": "Parse JSON"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c3748609-4f6f-459e-8fde-034c55eab773",
+  "meta": {
+    "instanceId": "108396788e3afbb6815346f17a2b85c1f807d029c1b1264258c2d49f66c42708"
+  },
+  "id": "2ueITJhUD3UeSfaC",
+  "tags": []
+}

@@ -1,0 +1,142 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -80
+      ],
+      "id": "58971bf6-2ea6-4b02-ac38-9c0108979762",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "text": "={{$json.Name}} is today at {{ $json.DateTime }}\n\n\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        16
+      ],
+      "id": "95d44571-c04b-4c81-aabc-c5aff9acd283",
+      "name": "Send a text message",
+      "webhookId": "a131b3fc-34de-40a9-8fb1-690870cfccde",
+      "credentials": {
+        "telegramApi": {
+          "id": "oAReQEXBjGB9DusV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "00 7 * * SAT,SUN"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        128
+      ],
+      "id": "6330d5ee-f51a-459a-9b70-21ce34571578",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.sportsdata.io/v3/mma/scores/json/Schedule/UFC/2025?key=bea1d3c162744d7eb009febf60377d45",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        16
+      ],
+      "id": "4d0c337f-b7fd-4d2b-96c0-39304a699d8d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Get today's date in YYYY-MM-DD format\nconst today = new Date().toISOString().split('T')[0];\n\n// Filter events where Day matches today\nconst filteredItems = items.filter(item => {\n  const eventDay = item.json.Day.split('T')[0]; // Extract date part only\n  return eventDay === today;\n});\n\nreturn filteredItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        16
+      ],
+      "id": "c2cc3769-2473-4b64-89a6-5b4bd42219fe",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "be2f8e1c-a6f6-4f93-a859-61e0cff5a932",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "108396788e3afbb6815346f17a2b85c1f807d029c1b1264258c2d49f66c42708"
+  },
+  "id": "jfO1CGLKTxfrJJSY",
+  "tags": []
+}
